@@ -37,6 +37,7 @@ build:
     -f Dockerfile .
   @echo "Starting build container..."
   docker run --rm --init -d --name {{QEMU_BUILD_CONTAINER}} \
+    -p 8888:8888 \
     -v $(pwd)/{{QEMU_REPO_DIR}}:/qemu/:ro \
     {{IMAGE_NAME}}
   @echo "Compiling QEMU with Wasm TCG backend..."
@@ -45,6 +46,14 @@ build:
   docker exec {{QEMU_BUILD_CONTAINER}} bash -c "cd /build && mkdir -p pack && cp /images/kernel.img pack/ && cp /images/rootfs.bin pack/ && cp -r /qemu/pc-bios/* pack/ && /emsdk/upstream/emscripten/tools/file_packager.py qemu-system-x86_64.data --preload pack > load.js"
   @echo "Setting up web server..."
   docker exec {{QEMU_BUILD_CONTAINER}} bash -c "cd /build && mkdir -p /tmp/test/htdocs/ && cp qemu-system-x86_64.js /tmp/test/htdocs/out.js && cp qemu-system-x86_64.wasm /tmp/test/htdocs/ && cp qemu-system-x86_64.data /tmp/test/htdocs/ && cp load.js /tmp/test/htdocs/ && cp -r /qemu/pc-bios/* /tmp/test/htdocs/"
+  @echo "Starting web server..."
+  docker exec -d {{QEMU_BUILD_CONTAINER}} bash -c "cd /tmp/test/htdocs && python3 -m http.server 8888"
+  @echo "You can now access QEMU at: http://localhost:8888"
+
+# Start the web server (if build is already done)
+serve:
+  @echo "Starting web server..."
+  docker exec -d {{QEMU_BUILD_CONTAINER}} bash -c "cd /tmp/test/htdocs && python3 -m http.server 8888"
   @echo "You can now access QEMU at: http://localhost:8888"
 
 # Run a package
