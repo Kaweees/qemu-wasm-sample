@@ -1,0 +1,4 @@
+[submodule "external/qemu-wasm"]
+	path = external/qemu-wasm
+	url = https://github.com/ktock/qemu-wasm
+	branch = wasm64-tcg-b
