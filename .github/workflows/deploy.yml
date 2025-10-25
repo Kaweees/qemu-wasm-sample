@@ -24,7 +24,7 @@ jobs:
         uses: ./.github/actions/setup-emscripten-env
       - run: emcc --version
       - name: Build Project
-        run: just web
+        run: just build
       - name: Deploy to gh-pages
         uses: crazy-max/ghaction-github-pages@v4
         if: github.ref == 'refs/heads/master' || github.ref == 'refs/heads/main'

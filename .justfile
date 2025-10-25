@@ -35,8 +35,9 @@ build:
     - < {{QEMU_REPO_DIR}}/tests/docker/dockerfiles/emsdk-wasm-cross.docker
   docker build --progress=plain -t {{TARGET}} \
     --build-arg QEMU_BASE_IMAGE={{QEMU_BUILD_CONTAINER}} \
-    -f {{QEMU_REPO_DIR}}/Dockerfile .
+    -f Dockerfile .
   @echo "Compiling QEMU with Wasm TCG backend..."
+  docker exec {{QEMU_BUILD_CONTAINER}} bash -c "cd /build && emconfigure /qemu/configure --cpu=wasm64 --enable-wasm64-32bit-address-limit --static --disable-tools --target-list=x86_64-softmmu && emmake make -j{{CORES}}"
 
 # Run a package
 run:
@@ -45,5 +46,5 @@ run:
 # Remove build artifacts and non-essential files
 clean:
   @echo "Cleaning..."
-  docker rm -rf {{TARGET}} 2>/dev/null || true
-  docker rm -rf {{QEMU_BUILD_CONTAINER}} 2>/dev/null || true
+  docker rm -f {{TARGET}} 2>/dev/null || true
+  docker rm -f {{QEMU_BUILD_CONTAINER}} 2>/dev/null || true
