@@ -3,9 +3,6 @@ name: Deploy to GitHub Pages
 # Controls when the workflow will run
 on:
   push:
-    branches:
-      - master
-      - main
   pull_request:
 # The sequence of runs in this workflow:
 jobs:
@@ -25,6 +22,8 @@ jobs:
       - run: emcc --version
       - name: Build Project
         run: just build
+      - name: Add necessary files to public directory
+        run: just web
       - name: Deploy to gh-pages
         uses: crazy-max/ghaction-github-pages@v4
         if: github.ref == 'refs/heads/master' || github.ref == 'refs/heads/main'
