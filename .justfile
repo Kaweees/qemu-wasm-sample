@@ -13,7 +13,7 @@ CORES := if os() == "macos" { `sysctl -n hw.ncpu` } else if os() == "linux" { `n
 # The container name.
 QEMU_REPO_DIR := "external/qemu-wasm"
 # # The base container image
-QEMU_BUILD_CONTAINER := "build-qemu-base-wasm64"
+QEMU_BUILD_CONTAINER := "build-qemu-wasm64"
 IMAGE_NAME := "build-qemu-wasm64"
 OUTPUT_DIR := "/tmp/test"
 
@@ -29,12 +29,12 @@ install:
 build:
   @echo "Building..."
   @echo "Building Docker environment..."
-  docker build --progress=plain -t {{QEMU_BUILD_CONTAINER}} --build-arg TARGET_CPU=wasm64 --build-arg WASM64_MEMORY64=1 - < {{QEMU_REPO_DIR}}/tests/docker/dockerfiles/emsdk-wasm-cross.docker
+  docker build --progress=plain -t {{QEMU_BUILD_CONTAINER}} --build-arg TARGET_CPU=wasm64 --build-arg WASM64_MEMORY64=2 - < {{QEMU_REPO_DIR}}/tests/docker/dockerfiles/emsdk-wasm-cross.docker
   docker build --progress=plain -t {{IMAGE_NAME}} --build-arg QEMU_BASE_IMAGE={{QEMU_BUILD_CONTAINER}} -f Dockerfile .
   @echo "Starting build container..."
   docker run --rm --init -d --name {{QEMU_BUILD_CONTAINER}} -v $(pwd)/{{QEMU_REPO_DIR}}:/qemu/:ro {{IMAGE_NAME}}
   @echo "Configuring and compiling QEMU with Wasm TCG backend..."
-  docker exec {{QEMU_BUILD_CONTAINER}} /bin/bash -c "cd /build && emconfigure /qemu/configure --cpu=wasm64 --static --disable-tools --target-list=x86_64-softmmu -Dcoroutine_backend=ucontext && emmake make -j{{CORES}}"
+  docker exec {{QEMU_BUILD_CONTAINER}} /bin/bash -c "cd /build && emconfigure /qemu/configure --cpu=wasm64 --enable-wasm64-32bit-address-limit --static --disable-tools --target-list=x86_64-softmmu -Dcoroutine_backend=wasm -sFORCE_FILESYSTEM && emmake make -j{{CORES}}"
   @echo "Bundling guest assets..."
   docker exec {{QEMU_BUILD_CONTAINER}} /bin/bash -c "cd /build && mkdir -p pack && cp /images/kernel.img pack/ && cp /images/rootfs.bin pack/ && cp -r /qemu/pc-bios/* pack/ && /emsdk/upstream/emscripten/tools/file_packager.py qemu-system-x86_64.data --preload pack > load.js"
   @echo "Setting up web server..."
